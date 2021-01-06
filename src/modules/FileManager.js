@@ -6,19 +6,20 @@ module.exports = (function () {
      * @classdesc Manage files to save.
      * @param {String} path File path to save
      * @param {Boolean} isJson Whether or not to string when storing
-     * @example new FileManager('Bot/Modules/FileManager.js', true)
+     * @param {Boolean} createNewFile Whether to create a file if it does not exist in the specified path
+     * @example new FileManager('Bot/Test.txt', true, true)
      */
-    function FileManager(path, isJson) {
+    function FileManager(path, isJson, createNewFile) {
         this.path = path;
         this._isJson = isJson || false;
         this.value = isJson ? new Object() : '';
-        this.load();
+        this.load(createNewFile);
     }
 
     /**
      * Specifies that the file is converted to a string when it is saved.
      * 
-     * @example new FileManager('Bot/Modules/FileManager.js').setJson()
+     * @example new FileManager('Bot/Test.txt').setJson()
      */
     FileManager.prototype.setJson = function () {
         this._isJson = true;
@@ -27,7 +28,7 @@ module.exports = (function () {
     /**
      * Specifies that the file is not converted to a string when it is saved.
      * 
-     * @example new FileManager('Bot/Modules/FileManager.js', true).releaseJson()
+     * @example new FileManager('Bot/Test.txt', true).releaseJson()
      */
     FileManager.prototype.releaseJson = function () {
         this._isJson = false;
@@ -37,16 +38,28 @@ module.exports = (function () {
      * Returns whether the file is converted to a string when it is saved.
      * 
      * @return Whether or not to string when storing
-     * @example new FileManager('Bot/Modules/FileManager.js', true).isJson()
+     * @example new FileManager('Bot/Test.txt', true).isJson()
      */
     FileManager.prototype.isJson = function () {
         return this._isJson;
     };
 
     /**
+     * Checks whether a file exists in the specified path.
+     * 
+     * @return Whether the file exists within the specified path
+     * @example new FileManager('Bot/Test.txt').exists()
+     */
+    FileManager.prototype.exists = function () {
+        const sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+
+        return new java.io.File(sdcard + '/' + this.path).exists();
+    };
+
+    /**
      * Stores the assigned values.
      * 
-     * @example new FileManager('Bot/Modules/FileManager.js', true).save()
+     * @example new FileManager('Bot/Test.txt', true).save()
      */
     FileManager.prototype.save = function () {
         const sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -68,14 +81,19 @@ module.exports = (function () {
     /**
      * Allocate stored values.
      * 
-     * @example new FileManager('Bot/Modules/FileManager.js', true).load()
+     * @param {Boolean} createNewFile Whether to create a file if it does not exist in the specified path
+     * @example new FileManager('Bot/Test.txt', true, true).load()
      */
-    FileManager.prototype.load = function () {
+    FileManager.prototype.load = function (createNewFile) {
         const sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
 
         let a = new java.io.File(sdcard + '/' + this.path);
 
-        if (!a.exists()) this.save();
+        if (!a.exists()) {
+            if (!createNewFile) return false;
+
+            this.save();
+        }
 
         let b = new java.io.FileInputStream(a),
             c = new java.io.InputStreamReader(b),
@@ -89,14 +107,14 @@ module.exports = (function () {
         c.close();
         d.close();
         
-        this.value = (this._isJson ? JSON.parse(e) : e);
+        return (this.value = (this._isJson ? JSON.parse(e) : e));
     };
 
     /**
      * Remove the stored value.
      * 
      * @return Whether to delete files
-     * @example new FileManager('Bot/Modules/FileManager.js', true).delete()
+     * @example new FileManager('Bot/Test.txt', true).delete()
      */
     FileManager.prototype.delete = function () {
         const sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -115,7 +133,7 @@ module.exports = (function () {
      * 
      * @param {any} value value to be allocated
      * @return assigned value
-     * @example new FileManager('Bot/Modules/FileManager.js', false).write('Hello, World!')
+     * @example new FileManager('Bot/Test.txt', false).write('Hello, World!')
      */
     FileManager.prototype.write = function (value) {
         return (this.value = value);
@@ -125,7 +143,7 @@ module.exports = (function () {
      * Empty the assigned value.
      * 
      * @return The value newly assigned after emptying
-     * @example new FileManager('Bot/Modules/FileManager.js', true).empty()
+     * @example new FileManager('Bot/Test.txt', true).empty()
      */
     FileManager.prototype.empty = function () {
         return (this.value = this._isJson ? new Object() : '');
@@ -135,7 +153,7 @@ module.exports = (function () {
      * Read the assigned values.
      * 
      * @return assigned value
-     * @example new FileManager('Bot/Modules/FileManager.js', true).read()
+     * @example new FileManager('Bot/Test.txt', true).read()
      */
     FileManager.prototype.read = function () {
         return this.value;

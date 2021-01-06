@@ -10,6 +10,8 @@ const Setting = function () {
     this.allowedUser = new Array();
 };
 
+const sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+
 let setting = new FileManager('Bot/RemoteCodeModifier/Setting.txt'),
     content = new Setting(),
     progress = 'default',
@@ -21,10 +23,23 @@ function response(room, msg, sender, isGroupChat, replier) {
     if (setting.read()) {
         content = setting.read();
 
-        /*switch (progress) {
+        switch (progress) {
             case 'default': {
                 if (cmd.isMsg('열기')) {
-                    replier.reply('');
+                    let bots = new java.io.File(sdcard + '/' + content.botFolderPath + '/Bots').list().filter(e => !/.js(on)?$/.test(e)).sort(),
+                        global_modules = new java.io.File(sdcard + '/' + content.botFolderPath + '/global_modules').list().map(e => e.replace(/(.js)$/, ''));
+
+                    replier.reply('파일을 선택하세요.');
+                    replier.reply(
+                        '[ Bots ]\n' +
+                        bots.map((e, i) => ' | (' + (i + 1) + ') ' + e).join('\n') +
+                        '\n[ global_modules ]\n' +
+                        global_modules.map((e, i) => ' | (' + (bots.length + i + 1) + ') ' + e).join('\n')
+                    );
+                    progress = 'pick_file';
+                
+                } else if (cmd.isCmd('열기')) {
+
                 }
                 
                 break;
@@ -35,7 +50,7 @@ function response(room, msg, sender, isGroupChat, replier) {
                 
                 break;
             }
-        }*/
+        }
 
         setting.write(content);
 
@@ -252,8 +267,7 @@ function response(room, msg, sender, isGroupChat, replier) {
 function onStartCompile() {
     if (!setting.read()) {
         Api.showToast('기본 세팅이 필요합니다.\n채팅창에 [ 세팅 ] 을 입력하세요.');
-
-    } else {
-        setting.save();
     }
+
+    setting.save();
 }
